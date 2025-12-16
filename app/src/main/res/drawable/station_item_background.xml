@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/widget_background" />
+        </shape>
+    </item>
+    
+    <!-- Bottom divider with insets -->
+    <item 
+        android:left="16dp"
+        android:right="16dp"
+        android:bottom="0dp"
+        android:height="1dp"
+        android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/widget_item_divider" />
+        </shape>
+    </item>
+</layer-list>
