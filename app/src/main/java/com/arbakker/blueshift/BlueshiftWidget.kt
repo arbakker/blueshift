@@ -194,8 +194,26 @@ class BlueshiftWidget : AppWidgetProvider() {
     }
     
     private fun switchToNextPlayer(context: Context) {
-        val players = ConfigManager.getPlayers(context)
+        // Get current network
+        val currentSSID = NetworkDetector.getCurrentWiFiSSID(context)
+        val currentNetwork = if (currentSSID != null) {
+            ConfigManager.getNetworkProfiles(context)
+                .firstOrNull { it.ssidOrSubnet == currentSSID }
+        } else {
+            null
+        }
+        
+        // If no network or no players, just refresh to show disconnected state
+        if (currentNetwork == null) {
+            refreshWidgets(context)
+            return
+        }
+        
+        // Get players for current network
+        val players = ConfigManager.getPlayersForNetwork(context, currentNetwork.id)
+        
         if (players.isEmpty()) {
+            refreshWidgets(context)
             return
         }
         
@@ -367,6 +385,76 @@ internal fun updateAppWidget(
 ) {
     
     val views = RemoteViews(context.packageName, R.layout.blueshift_widget)
+    
+    // Check current network and available players
+    val currentSSID = NetworkDetector.getCurrentWiFiSSID(context)
+    val currentNetwork = if (currentSSID != null) {
+        ConfigManager.getNetworkProfiles(context)
+            .firstOrNull { it.ssidOrSubnet == currentSSID }
+    } else {
+        null
+    }
+    
+    val availablePlayers = if (currentNetwork != null) {
+        ConfigManager.getPlayersForNetwork(context, currentNetwork.id)
+    } else {
+        emptyList()
+    }
+    
+    // If no WiFi network with players, show message
+    if (currentNetwork == null || availablePlayers.isEmpty()) {
+        views.setViewVisibility(R.id.stations_list, android.view.View.GONE)
+        views.setViewVisibility(R.id.switch_player_button, android.view.View.GONE)
+        views.setViewVisibility(R.id.play_pause_button, android.view.View.GONE)
+        
+        val message = when {
+            currentSSID == null -> "Not connected to WiFi"
+            currentNetwork == null -> "No players for: $currentSSID"
+            else -> "No players for this network"
+        }
+        
+        views.setTextViewText(R.id.player_indicator, message)
+        
+        // Only show "Open settings to add players" when on WiFi but no players
+        val nowPlayingMessage = if (currentSSID != null) {
+            "Open settings to add players"
+        } else {
+            "Tap to refresh"
+        }
+        views.setTextViewText(R.id.now_playing, nowPlayingMessage)
+        
+        // Set up refresh action for player indicator and now playing (tap to refresh)
+        val refreshIntent = Intent(context, BlueshiftWidget::class.java).apply {
+            action = BlueshiftWidget.ACTION_REFRESH
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+        val refreshPendingIntent = PendingIntent.getBroadcast(
+            context,
+            appWidgetId + 3000,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.player_indicator, refreshPendingIntent)
+        views.setOnClickPendingIntent(R.id.now_playing, refreshPendingIntent)
+        
+        // Keep settings button visible and functional
+        val settingsIntent = Intent(context, MainActivity::class.java)
+        val settingsPendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            settingsIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.settings_button, settingsPendingIntent)
+        
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+        return
+    }
+    
+    // Normal operation - show widget UI
+    views.setViewVisibility(R.id.stations_list, android.view.View.VISIBLE)
+    views.setViewVisibility(R.id.switch_player_button, android.view.View.VISIBLE)
+    views.setViewVisibility(R.id.play_pause_button, android.view.View.VISIBLE)
     
     // Set up the ListView with RemoteViewsService
     val serviceIntent = Intent(context, StationListRemoteViewsService::class.java)

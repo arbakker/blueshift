@@ -2,11 +2,11 @@
 <resources>
     <!-- Dark theme colors -->
     <color name="widget_background">#121212</color>
-    <color name="widget_surface">#1E1E1E</color>
+    <color name="widget_surface">#121212</color>
     <color name="widget_divider">#555555</color>
     <color name="widget_text_primary">#FFFFFF</color>
     <color name="widget_text_secondary">#AAAAAA</color>
     <color name="widget_icon">#FFFFFF</color>
-    <color name="widget_button_background">#2C2C2C</color>
+    <color name="widget_button_background">#2A2A2A</color>
     <color name="widget_item_divider">#333333</color>
 </resources>

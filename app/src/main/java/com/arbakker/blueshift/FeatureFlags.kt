@@ -12,7 +12,7 @@ object FeatureFlags {
     
     /**
      * Enable export of presets to M3U playlist file.
-     * INCOMPLETE, NON-FUNCTIONAL: Feature is not fully implemented or tested.
+     * Includes TuneIn resolution for maximum compatibility.
      */
-    const val ENABLE_PRESET_EXPORT = false
+    const val ENABLE_PRESET_EXPORT = true
 }

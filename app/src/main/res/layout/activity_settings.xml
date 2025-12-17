@@ -7,8 +7,41 @@
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
+
+    <!-- Blueshift Gradient Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/blueshift_gradient"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="24dp"
+        android:paddingTop="56dp"
+        android:gravity="start">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Blueshift Settings"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:shadowColor="#40000000"
+            android:shadowDx="0"
+            android:shadowDy="2"
+            android:shadowRadius="4"
+            android:layout_marginStart="0dp"
+            android:layout_marginBottom="16dp" />
+    </LinearLayout>
+
+    <!-- Content Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
     <!-- Players Section Header -->
     <TextView
@@ -19,6 +52,51 @@
         android:textStyle="bold"
         android:textColor="?attr/colorPrimary"
         android:layout_marginBottom="8dp" />
+
+    <!-- Network Selector and Sync Button Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <!-- Network Selector (shown when multiple networks exist) -->
+        <LinearLayout
+            android:id="@+id/network_selector_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Network:"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <Spinner
+                android:id="@+id/network_selector_spinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <!-- Sync Presets Button -->
+        <Button
+            android:id="@+id/manual_sync_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Sync Presets"
+            android:textSize="11sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            style="?attr/materialButtonOutlinedStyle" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/players_list"
@@ -96,18 +174,14 @@
         android:textColor="?android:attr/textColorSecondary" />
 
     <Button
-        android:id="@+id/manual_sync_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Sync Presets" />
-
-    <Button
         android:id="@+id/export_presets_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Export Presets to M3U" />
+
+    </LinearLayout>
+    <!-- End Content Container -->
 
 </LinearLayout>
 

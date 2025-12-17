@@ -4,11 +4,19 @@ data class Player(
     val id: String,
     val label: String,
     val host: String,
-    val port: Int = 11000
+    val port: Int = 11000,
+    val networkId: String? = null  // Reference to NetworkProfile.id
 ) {
     val url: String
         get() = "http://$host:$port"
 }
+
+data class NetworkProfile(
+    val id: String,
+    val name: String? = null,  // Optional user-provided name like "Home" or "Office"
+    val ssidOrSubnet: String? = null,  // WiFi SSID (e.g., "MyHomeWiFi")
+    val isDefault: Boolean = false  // Selected network
+)
 
 data class RadioStation(
     val id: String,

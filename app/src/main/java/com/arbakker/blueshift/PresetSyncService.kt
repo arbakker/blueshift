@@ -45,6 +45,26 @@ object PresetSyncService {
     }
     
     /**
+     * Fetch presets from specific players
+     */
+    suspend fun syncPlayersPresets(context: Context, players: List<Player>) = withContext(Dispatchers.IO) {
+        val allPresets = ConfigManager.getPresets(context).toMutableList()
+        
+        // Remove presets for these players first
+        val playerIds = players.map { it.id }.toSet()
+        allPresets.removeAll { it.playerId in playerIds }
+        
+        // Fetch fresh presets for the specified players
+        for (player in players) {
+            val presets = fetchPresetsFromPlayer(player)
+            allPresets.addAll(presets)
+        }
+        
+        // Save updated presets to config
+        ConfigManager.savePresets(context, allPresets)
+    }
+    
+    /**
      * Fetch presets from all configured players
      */
     suspend fun syncAllPresets(context: Context) = withContext(Dispatchers.IO) {
