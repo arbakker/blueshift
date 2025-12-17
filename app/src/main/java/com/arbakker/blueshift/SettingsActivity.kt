@@ -36,7 +36,6 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var discoverPlayersButton: Button
     private lateinit var addPlayerButton: Button
     private lateinit var manualSyncButton: Button
-    private lateinit var exportPresetsButton: Button
     private lateinit var presetOrderSpinner: Spinner
     private lateinit var networkSelectorContainer: LinearLayout
     private lateinit var networkSelectorSpinner: Spinner
@@ -50,18 +49,17 @@ class SettingsActivity : AppCompatActivity() {
         
         // Hide the action bar title
         supportActionBar?.hide()
-        
+
         // Make status bar transparent so gradient can extend behind it
         window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.decorView.systemUiVisibility = 
-            android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE or 
+        window.decorView.systemUiVisibility =
+            android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
             android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        
-    playersList = findViewById(R.id.players_list)
-    discoverPlayersButton = findViewById(R.id.discover_players_button)
-    addPlayerButton = findViewById(R.id.add_player_button)
-    manualSyncButton = findViewById(R.id.manual_sync_button)
-    exportPresetsButton = findViewById(R.id.export_presets_button)
+
+        playersList = findViewById(R.id.players_list)
+        discoverPlayersButton = findViewById(R.id.discover_players_button)
+        addPlayerButton = findViewById(R.id.add_player_button)
+        manualSyncButton = findViewById(R.id.manual_sync_button)
     presetOrderSpinner = findViewById(R.id.preset_order_spinner)
     networkSelectorContainer = findViewById(R.id.network_selector_container)
     networkSelectorSpinner = findViewById(R.id.network_selector_spinner)
@@ -71,18 +69,13 @@ class SettingsActivity : AppCompatActivity() {
             discoverPlayersButton.visibility = android.view.View.GONE
         }
         
-        // Hide export button if feature is disabled
-        if (!FeatureFlags.ENABLE_PRESET_EXPORT) {
-            exportPresetsButton.visibility = android.view.View.GONE
-        }
-        
+    // Export presets is now only accessible via player options, so no top-level button.
+
     setupNetworkSelector()
     setupPlayers()
-        
     setupPresetOrderSpinner()
 
         manualSyncButton.setOnClickListener { syncPresetsManually() }
-        exportPresetsButton.setOnClickListener { exportPresetsToM3U() }
         discoverPlayersButton.setOnClickListener { discoverPlayers() }
         addPlayerButton.setOnClickListener { showAddPlayerDialog() }
     }

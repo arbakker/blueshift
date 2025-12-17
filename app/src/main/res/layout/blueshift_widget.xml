@@ -103,13 +103,13 @@
             android:ellipsize="end"
             android:maxLines="3" />
         
-        <!-- Visual separator using TextView -->
+        <!-- Visual separator using gradient to match settings header -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginStart="-16dp"
             android:layout_marginEnd="-16dp"
-            android:background="@color/widget_divider" />
+            android:background="@drawable/divider_gradient" />
     </LinearLayout>
 
     <!-- Station List (using ListView for dynamic content) -->

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <size android:height="1dp" />
+
+    <!-- Reuse the same horizontal gradient colors as the header banner -->
+    <gradient
+        android:type="linear"
+        android:angle="0"
+        android:startColor="#FF4444"
+        android:centerColor="#AA44AA"
+        android:endColor="#4444FF" />
+
+</shape>

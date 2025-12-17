@@ -9,7 +9,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <!-- Blueshift Gradient Header -->
+    <!-- Blueshift Gradient Header with title only -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,7 +20,7 @@
         android:paddingBottom="24dp"
         android:paddingTop="56dp"
         android:gravity="start">
-        
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,8 +31,11 @@
             android:shadowColor="#40000000"
             android:shadowDx="0"
             android:shadowDy="2"
-            android:shadowRadius="4"
-            android:layout_marginStart="0dp"
+            android:shadowRadius="4" />
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginBottom="16dp" />
     </LinearLayout>
 
@@ -121,13 +124,13 @@
         android:layout_marginTop="4dp"
         android:text="Discover Players" />
 
-    <!-- Divider -->
+    <!-- Divider with subtle gradient to match header -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="16dp"
-        android:background="?android:attr/listDivider" />
+        android:background="@drawable/divider_gradient" />
 
     <!-- Settings Section Header -->
     <TextView
@@ -172,13 +175,6 @@
         android:textSize="12sp"
         android:textStyle="italic"
         android:textColor="?android:attr/textColorSecondary" />
-
-    <Button
-        android:id="@+id/export_presets_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Export Presets to M3U" />
 
     </LinearLayout>
     <!-- End Content Container -->
