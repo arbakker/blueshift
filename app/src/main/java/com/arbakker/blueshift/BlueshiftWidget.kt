@@ -54,7 +54,6 @@ class BlueshiftWidget : AppWidgetProvider() {
             for (id in appWidgetIds) {
                 appWidgetManager.notifyAppWidgetViewDataChanged(id, R.id.stations_list)
             }
-
             val updateIntent = Intent(context, BlueshiftWidget::class.java).apply {
                 action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
@@ -113,7 +112,73 @@ class BlueshiftWidget : AppWidgetProvider() {
             }
             ACTION_REFRESH -> {
                 Log.d("BlueshiftWidget", "ACTION_REFRESH received")
-                refreshWidgets(context)
+                
+                // Check network status
+                val currentSSID = NetworkDetector.getCurrentWiFiSSID(context)
+                Log.d("BlueshiftWidget", "Current SSID: $currentSSID")
+                
+                val currentNetwork = if (currentSSID != null) {
+                    ConfigManager.getNetworkProfiles(context)
+                        .firstOrNull { it.ssidOrSubnet == currentSSID }
+                } else {
+                    null
+                }
+                Log.d("BlueshiftWidget", "Current network: ${currentNetwork?.name}")
+                
+                val availablePlayers = if (currentNetwork != null) {
+                    ConfigManager.getPlayersForNetwork(context, currentNetwork.id)
+                } else {
+                    emptyList()
+                }
+                Log.d("BlueshiftWidget", "Available players: ${availablePlayers.size}")
+                
+                // If there's a problem, briefly show error message in widget
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(
+                    ComponentName(context, BlueshiftWidget::class.java)
+                )
+                
+                when {
+                    currentSSID == null -> {
+                        Log.d("BlueshiftWidget", "No WiFi connection")
+                        // Show error message in widget for 2 seconds, then refresh
+                        for (appWidgetId in appWidgetIds) {
+                            val views = RemoteViews(context.packageName, R.layout.blueshift_widget)
+                            views.setTextViewText(R.id.now_playing, "⚠ Not connected to WiFi")
+                            appWidgetManager.updateAppWidget(appWidgetId, views)
+                        }
+                        // Refresh after delay to restore normal state
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            refreshWidgets(context)
+                        }, 2000)
+                    }
+                    currentNetwork == null -> {
+                        Log.d("BlueshiftWidget", "No network profile found")
+                        for (appWidgetId in appWidgetIds) {
+                            val views = RemoteViews(context.packageName, R.layout.blueshift_widget)
+                            views.setTextViewText(R.id.now_playing, "⚠ No profile for: $currentSSID")
+                            appWidgetManager.updateAppWidget(appWidgetId, views)
+                        }
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            refreshWidgets(context)
+                        }, 2000)
+                    }
+                    availablePlayers.isEmpty() -> {
+                        Log.d("BlueshiftWidget", "No players found")
+                        for (appWidgetId in appWidgetIds) {
+                            val views = RemoteViews(context.packageName, R.layout.blueshift_widget)
+                            views.setTextViewText(R.id.now_playing, "⚠ No players for this network")
+                            appWidgetManager.updateAppWidget(appWidgetId, views)
+                        }
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            refreshWidgets(context)
+                        }, 2000)
+                    }
+                    else -> {
+                        Log.d("BlueshiftWidget", "All checks passed, refreshing normally")
+                        refreshWidgets(context)
+                    }
+                }
             }
         }
     }
@@ -420,7 +485,7 @@ internal fun updateAppWidget(
             "Empty state: currentSSID=$currentSSID, currentNetwork=${currentNetwork?.id}, availablePlayers=${availablePlayers.size}"
         )
         views.setViewVisibility(R.id.stations_list, android.view.View.GONE)
-        views.setViewVisibility(R.id.player_selector_container, android.view.View.GONE)
+        views.setViewVisibility(R.id.player_selector_container, android.view.View.VISIBLE)
         views.setViewVisibility(R.id.play_pause_button, android.view.View.GONE)
         
         val message = when {
@@ -434,9 +499,9 @@ internal fun updateAppWidget(
         // When on WiFi but no players, clearly guide the user.
         // When not on WiFi, emphasize that tapping will refresh.
         val nowPlayingMessage = if (currentSSID != null) {
-            "No players found. Tap here to refresh."
+            "No players found, add player in settings"
         } else {
-            "Not connected. Tap here to refresh."
+            "Tap here to refresh"
         }
         views.setTextViewText(R.id.now_playing, nowPlayingMessage)
         

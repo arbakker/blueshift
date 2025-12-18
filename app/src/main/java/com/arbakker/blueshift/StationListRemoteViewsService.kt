@@ -67,10 +67,15 @@ class StationListRemoteViewsFactory(
         }
     }
 
-    override fun getLoadingView(): RemoteViews? = null
+    override fun getLoadingView(): RemoteViews? {
+        // Return null to use default loading behavior
+        // This prevents "Loading..." from appearing as placeholder items
+        return null
+    }
 
-    // Only one view type (preset row) to avoid adapter mismatches causing 'Loading...' placeholders
-    override fun getViewTypeCount(): Int = 1
+    // Two view types: regular and compact
+    // Note: All items use the same view type at any given time based on compact mode setting
+    override fun getViewTypeCount(): Int = 2
 
     override fun getItemId(position: Int): Long =
         when (val item = items.getOrNull(position)) {
