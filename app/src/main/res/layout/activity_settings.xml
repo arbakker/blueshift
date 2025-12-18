@@ -4,42 +4,22 @@
     android:layout_height="match_parent"
     android:fillViewport="true">
 
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <!-- Blueshift Gradient Header with title only -->
+    <!-- Content Container under the theme-provided ActionBar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/blueshift_gradient"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp"
-        android:paddingTop="56dp"
-        android:gravity="start">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Blueshift Settings"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:shadowColor="#40000000"
-            android:shadowDx="0"
-            android:shadowDy="2"
-            android:shadowRadius="4" />
+    <!-- Divider under ActionBar -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/divider_gradient" />
 
-        <View
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginBottom="16dp" />
-    </LinearLayout>
-
-    <!-- Content Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,8 +33,8 @@
         android:text="Players"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="?attr/colorPrimary"
-        android:layout_marginBottom="8dp" />
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginBottom="12dp" />
 
     <!-- Network Selector and Sync Button Row -->
     <LinearLayout
@@ -78,13 +58,14 @@
                 android:layout_height="wrap_content"
                 android:text="Network:"
                 android:textSize="14sp"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginEnd="8dp" />
 
             <Spinner
                 android:id="@+id/network_selector_spinner"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="4dp"
                 android:layout_weight="1" />
         </LinearLayout>
 
@@ -96,15 +77,19 @@
             android:layout_marginStart="8dp"
             android:text="Sync Presets"
             android:textSize="11sp"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
+            android:textColor="?android:attr/textColorPrimary"
             style="?attr/materialButtonOutlinedStyle" />
     </LinearLayout>
 
     <ListView
         android:id="@+id/players_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="200dp"
+        android:divider="?android:attr/listDivider"
         android:dividerHeight="1dp" />
 
     <!-- Add Player Button with + icon -->
@@ -115,21 +100,23 @@
         android:layout_marginTop="8dp"
         android:text="+ Add Player"
         style="?attr/borderlessButtonStyle"
-        android:textColor="?attr/colorPrimary" />
+        android:textColor="?android:attr/textColorSecondary" />
 
     <Button
         android:id="@+id/discover_players_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Discover Players" />
+        android:text="Discover Players"
+        style="?attr/borderlessButtonStyle"
+        android:textColor="?android:attr/textColorSecondary" />
 
-    <!-- Divider with subtle gradient to match header -->
+    <!-- Divider between sections -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
         android:background="@drawable/divider_gradient" />
 
     <!-- Settings Section Header -->
@@ -139,7 +126,7 @@
         android:text="Settings"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
 
     <!-- Preset Order Setting -->
@@ -168,17 +155,154 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
+        android:layout_marginTop="8dp"
         android:text="Note: Alphabetical ordering groups presets into inputs and non-inputs"
         android:textSize="12sp"
         android:textStyle="italic"
         android:textColor="?android:attr/textColorSecondary" />
 
+    <!-- Compact Mode Setting -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Compact Mode"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/compact_mode_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
-    <!-- End Content Container -->
 
-</LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Show more presets using a denser layout"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:textColor="?android:attr/textColorSecondary" />
 
+    <!-- Divider between sections -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/divider_gradient" />
+
+    <!-- About Section Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="About"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Version -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="VERSION"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+        <TextView
+            android:id="@+id/app_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Blueshift v1.0"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary" />
+    </LinearLayout>
+
+    <!-- Description -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DESCRIPTION"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="An Android widget for quick access to BluOS audio player presets"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary" />
+    </LinearLayout>
+
+    <!-- Disclaimer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DISCLAIMER"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Not affiliated with, endorsed by, or sponsored by Bluesound"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary" />
+    </LinearLayout>
+
+    <!-- Source Repository -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SOURCE CODE"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+        <TextView
+            android:id="@+id/source_link"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="github.com/arbakker/blueshift"
+            android:textSize="16sp"
+            android:textColor="?attr/colorPrimary"
+            android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+    </LinearLayout>
+    </LinearLayout>
 </ScrollView>

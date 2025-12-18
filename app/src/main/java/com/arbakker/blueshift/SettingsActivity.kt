@@ -12,8 +12,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
-import android.app.ProgressDialog
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -39,22 +39,18 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var presetOrderSpinner: Spinner
     private lateinit var networkSelectorContainer: LinearLayout
     private lateinit var networkSelectorSpinner: Spinner
+    private lateinit var compactModeSwitch: androidx.appcompat.widget.SwitchCompat
     
     private lateinit var playersAdapter: ArrayAdapter<String>
+    private var currentPlayers: List<Player> = emptyList()
     private var currentNetworkFilter: String? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-        
-        // Hide the action bar title
-        supportActionBar?.hide()
 
-        // Make status bar transparent so gradient can extend behind it
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.decorView.systemUiVisibility =
-            android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-            android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        // Use the built-in DarkActionBar from the app theme; set a clear app + screen title.
+        supportActionBar?.title = "Blueshift"
 
         playersList = findViewById(R.id.players_list)
         discoverPlayersButton = findViewById(R.id.discover_players_button)
@@ -63,6 +59,7 @@ class SettingsActivity : AppCompatActivity() {
     presetOrderSpinner = findViewById(R.id.preset_order_spinner)
     networkSelectorContainer = findViewById(R.id.network_selector_container)
     networkSelectorSpinner = findViewById(R.id.network_selector_spinner)
+    compactModeSwitch = findViewById(R.id.compact_mode_switch)
         
         // Hide discovery button if feature is disabled
         if (!FeatureFlags.ENABLE_PLAYER_DISCOVERY) {
@@ -74,6 +71,8 @@ class SettingsActivity : AppCompatActivity() {
     setupNetworkSelector()
     setupPlayers()
     setupPresetOrderSpinner()
+    setupCompactModeSwitch()
+    setupAboutSection()
 
         manualSyncButton.setOnClickListener { syncPresetsManually() }
         discoverPlayersButton.setOnClickListener { discoverPlayers() }
@@ -94,18 +93,27 @@ class SettingsActivity : AppCompatActivity() {
         
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        
+        // Temporarily remove listener to prevent triggering during setup
+        networkSelectorSpinner.onItemSelectedListener = null
         networkSelectorSpinner.adapter = adapter
         
-        // Select default network
-        val defaultNetwork = ConfigManager.getDefaultNetwork(this)
-        val defaultIndex = if (defaultNetwork != null) {
-            networks.indexOf(defaultNetwork) + 1 // +1 for "All Networks"
+        // Preserve current filter if it exists, otherwise use default network
+        val selectionIndex = if (currentNetworkFilter != null) {
+            val index = networks.indexOfFirst { it.id == currentNetworkFilter }
+            if (index >= 0) index + 1 else 0 // +1 for "All Networks"
         } else {
-            0
+            val defaultNetwork = ConfigManager.getDefaultNetwork(this)
+            if (defaultNetwork != null) {
+                networks.indexOf(defaultNetwork) + 1 // +1 for "All Networks"
+            } else {
+                0
+            }
         }
-        networkSelectorSpinner.setSelection(defaultIndex)
-        currentNetworkFilter = if (defaultIndex == 0) null else networks[defaultIndex - 1].id
+        networkSelectorSpinner.setSelection(selectionIndex)
+        currentNetworkFilter = if (selectionIndex == 0) null else networks[selectionIndex - 1].id
         
+        // Re-attach listener after setup is complete
         networkSelectorSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 currentNetworkFilter = if (position == 0) {
@@ -114,7 +122,7 @@ class SettingsActivity : AppCompatActivity() {
                     networks[position - 1].id
                 }
                 
-                // Update default network
+                // Update default network       
                 currentNetworkFilter?.let { networkId ->
                     ConfigManager.setDefaultNetwork(this@SettingsActivity, networkId)
                 }
@@ -127,21 +135,33 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun setupPlayers() {
-        val players = if (currentNetworkFilter == null) {
+        currentPlayers = if (currentNetworkFilter == null) {
             ConfigManager.getPlayers(this) // All players
         } else {
             ConfigManager.getPlayersForNetwork(this, currentNetworkFilter)
         }
         
-        val playerNames = players.map { player ->
+        android.util.Log.d("SettingsActivity", "setupPlayers: currentNetworkFilter=$currentNetworkFilter, players.size=${currentPlayers.size}")
+        currentPlayers.forEachIndexed { index, player ->
+            android.util.Log.d("SettingsActivity", "  Player $index: ${player.label} (${player.host}:${player.port}) networkId=${player.networkId}")
+        }
+        
+        val playerNames = currentPlayers.map { player ->
             "${player.label} (${player.host}:${player.port})"
+        }
+        
+        android.util.Log.d("SettingsActivity", "playerNames.size=${playerNames.size}")
+        playerNames.forEachIndexed { index, name ->
+            android.util.Log.d("SettingsActivity", "  Name $index: $name")
         }
         
         playersAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, playerNames.toMutableList())
         playersList.adapter = playersAdapter
         
+        android.util.Log.d("SettingsActivity", "Adapter set, adapter.count=${playersAdapter.count}")
+        
         playersList.setOnItemClickListener { _, _, position, _ ->
-            val player = players[position]
+            val player = currentPlayers[position]
             showPlayerOptionsDialog(player)
         }
     }
@@ -188,6 +208,17 @@ class SettingsActivity : AppCompatActivity() {
 
         presetOrderSpinner.setSelection(currentOrdering.ordinal)
         spinnerReady = true
+    }
+    
+    private fun setupCompactModeSwitch() {
+        // Set current state
+        compactModeSwitch.isChecked = ConfigManager.isCompactMode(this)
+        
+        // Listen for changes
+        compactModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            ConfigManager.setCompactMode(this, isChecked)
+            BlueshiftWidget.refreshWidgets(this)
+        }
     }
     
     private fun showAddPlayerDialog() {
@@ -248,11 +279,11 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun testPlayerConnection(label: String, host: String, port: Int, networkId: String?) {
-        val progressDialog = ProgressDialog(this).apply {
-            setMessage("Testing connection to $host:$port...")
-            setCancelable(false)
-            show()
-        }
+        val progressDialog = AlertDialog.Builder(this)
+            .setMessage("Testing connection to $host:$port...")
+            .setCancelable(false)
+            .create()
+        progressDialog.show()
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -273,14 +304,28 @@ class SettingsActivity : AppCompatActivity() {
                 
                 if (status != null) {
                     // Connection successful - add player
+                    android.util.Log.d("SettingsActivity", "Adding player: ${testPlayer.label} to networkId=${testPlayer.networkId}")
                     ConfigManager.addPlayer(this@SettingsActivity, testPlayer)
-                    setupNetworkSelector() // Refresh network selector
-                    setupPlayers()
+                    
+                    // If player was added to a specific network, switch to that network filter
+                    if (testPlayer.networkId != null) {
+                        android.util.Log.d("SettingsActivity", "Switching currentNetworkFilter to ${testPlayer.networkId}")
+                        currentNetworkFilter = testPlayer.networkId
+                    }
+                    
+                    setupNetworkSelector() // Refresh network selector (will preserve currentNetworkFilter)
+                    setupPlayers() // Refresh player list
+                    
+                    // Sync presets from the new player
+                    withContext(Dispatchers.IO) {
+                        PresetSyncService.syncPlayersPresets(this@SettingsActivity, listOf(testPlayer))
+                    }
+                    
                     BlueshiftWidget.refreshWidgets(this@SettingsActivity)
                     
                     Toast.makeText(
                         this@SettingsActivity,
-                        "Player added successfully",
+                        "Player added and presets synced",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
@@ -290,9 +335,41 @@ class SettingsActivity : AppCompatActivity() {
                         .setMessage("Could not connect to player at $host:$port.\n\nPlease check:\n• Host/IP address is correct\n• Port is correct (default: 11000)\n• Player is powered on\n• Device is on the same network")
                         .setPositiveButton("Add Anyway") { _, _ ->
                             ConfigManager.addPlayer(this@SettingsActivity, testPlayer)
+                            
+                            // If player was added to a specific network, switch to that network filter
+                            if (testPlayer.networkId != null) {
+                                currentNetworkFilter = testPlayer.networkId
+                            }
+                            
                             setupNetworkSelector()
                             setupPlayers()
-                            BlueshiftWidget.refreshWidgets(this@SettingsActivity)
+                            
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                "Player added",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            
+                            // Try to sync presets even if connection test failed
+                            CoroutineScope(Dispatchers.Main).launch {
+                                try {
+                                    withContext(Dispatchers.IO) {
+                                        PresetSyncService.syncPlayersPresets(this@SettingsActivity, listOf(testPlayer))
+                                    }
+                                    BlueshiftWidget.refreshWidgets(this@SettingsActivity)
+                                    Toast.makeText(
+                                        this@SettingsActivity,
+                                        "Presets synced successfully",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        this@SettingsActivity,
+                                        "Could not sync presets: player unreachable",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
                         }
                         .setNegativeButton("Cancel", null)
                         .show()
@@ -313,7 +390,33 @@ class SettingsActivity : AppCompatActivity() {
                         ConfigManager.addPlayer(this@SettingsActivity, player)
                         setupNetworkSelector()
                         setupPlayers()
-                        BlueshiftWidget.refreshWidgets(this@SettingsActivity)
+                        
+                        Toast.makeText(
+                            this@SettingsActivity,
+                            "Player added",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        
+                        // Try to sync presets even if connection test failed
+                        CoroutineScope(Dispatchers.Main).launch {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    PresetSyncService.syncPlayersPresets(this@SettingsActivity, listOf(player))
+                                }
+                                BlueshiftWidget.refreshWidgets(this@SettingsActivity)
+                                Toast.makeText(
+                                    this@SettingsActivity,
+                                    "Presets synced successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    this@SettingsActivity,
+                                    "Could not sync presets: player unreachable",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                     .setNegativeButton("Cancel", null)
                     .show()
@@ -441,11 +544,11 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
         
-        val progressDialog = ProgressDialog(this).apply {
-            setMessage("Syncing BluOS presets...")
-            setCancelable(false)
-            show()
-        }
+        val progressDialog = AlertDialog.Builder(this)
+            .setMessage("Syncing BluOS presets...")
+            .setCancelable(false)
+            .create()
+        progressDialog.show()
         manualSyncButton.isEnabled = false
         
         CoroutineScope(Dispatchers.Main).launch {
@@ -473,11 +576,11 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun discoverPlayers() {
-        val progressDialog = ProgressDialog(this).apply {
-            setMessage("Discovering BluOS players on local network...\nThis may take up to a minute.")
-            setCancelable(false)
-            show()
-        }
+        val progressDialog = AlertDialog.Builder(this)
+            .setMessage("Discovering BluOS players on local network...\nThis may take up to a minute.")
+            .setCancelable(false)
+            .create()
+        progressDialog.show()
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -578,11 +681,11 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun performExport(presets: List<BluOSPreset>) {
-        val progressDialog = ProgressDialog(this).apply {
-            setMessage("Exporting presets...")
-            setCancelable(false)
-            show()
-        }
+        val progressDialog = AlertDialog.Builder(this)
+            .setMessage("Exporting presets...")
+            .setCancelable(false)
+            .create()
+        progressDialog.show()
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -821,7 +924,7 @@ class SettingsActivity : AppCompatActivity() {
     
     private suspend fun resolvePlaylistUrl(playlistUrl: String): String? {
         return try {
-            withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {           
                 val url = URL(playlistUrl)
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
@@ -848,6 +951,28 @@ class SettingsActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             null
+        }
+    }
+    
+    private fun setupAboutSection() {
+        // Set app version dynamically from PackageManager
+        val versionText = findViewById<TextView>(R.id.app_version)
+        try {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            versionText.text = "Blueshift v${packageInfo.versionName}"
+        } catch (e: Exception) {
+            versionText.text = "Blueshift"
+        }
+        
+        // Make source link clickable
+        val sourceLink = findViewById<TextView>(R.id.source_link)
+        sourceLink.setOnClickListener {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/arbakker/blueshift"))
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Could not open browser", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

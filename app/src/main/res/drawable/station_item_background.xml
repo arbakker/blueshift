@@ -1,21 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Background -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state: clearly tinted row to indicate touch -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <!-- Semi-transparent accent-ish red so the row visibly flashes -->
+                    <solid android:color="#33FF4444" />
+                </shape>
+            </item>
+
+            <item
+                android:left="16dp"
+                android:right="16dp"
+                android:bottom="0dp"
+                android:height="1dp"
+                android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/widget_item_divider" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Default (not pressed) state -->
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/widget_background" />
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/widget_background" />
+                </shape>
+            </item>
+
+            <item
+                android:left="16dp"
+                android:right="16dp"
+                android:bottom="0dp"
+                android:height="1dp"
+                android:gravity="bottom">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/widget_item_divider" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
-    
-    <!-- Bottom divider with insets -->
-    <item 
-        android:left="16dp"
-        android:right="16dp"
-        android:bottom="0dp"
-        android:height="1dp"
-        android:gravity="bottom">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/widget_item_divider" />
-        </shape>
-    </item>
-</layer-list>
+</selector>

@@ -1,55 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Player Label:"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/player_label"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:hint="e.g., Living Room"
-        android:inputType="text"
-        android:importantForAutofill="no" />
+        android:hint="Name">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Host/IP Address:"
-        android:textStyle="bold" />
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/player_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:importantForAutofill="no" />
 
-    <EditText
-        android:id="@+id/player_host"
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:hint="e.g., 192.168.1.59"
-        android:inputType="text"
-        android:importantForAutofill="no" />
+        android:hint="Host/IP Address"
+        app:helperText="192.168.1.2 or living-room-player.local"
+        app:helperTextEnabled="true">
 
-    <TextView
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/player_host"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:importantForAutofill="no" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Port:"
-        android:textStyle="bold" />
+        android:hint="Port">
 
-    <EditText
-        android:id="@+id/player_port"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="11000"
-        android:inputType="number"
-        android:importantForAutofill="no" />
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/player_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:importantForAutofill="no" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

@@ -2,6 +2,7 @@ package com.arbakker.blueshift
 
 import android.content.Context
 import android.util.Log
+import android.text.Html
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -98,15 +99,13 @@ object PresetSyncService {
                 val url = match.groupValues[3]
                 val image = match.groupValues.getOrNull(4)?.takeIf { it.isNotEmpty() }
                 
-                // Decode HTML entities
-                val decodedName = name
-                    .replace("&amp;", "&")
-                    .replace("&lt;", "<")
-                    .replace("&gt;", ">")
-                    .replace("&quot;", "\"")
-                
-                val decodedUrl = url
-                    .replace("&amp;", "&")
+                // Decode entities using Android's Html.fromHtml to cover a wide range
+                // of XML/HTML encodings (e.g. &amp;, &#39;, etc.).
+                @Suppress("DEPRECATION")
+                val decodedName = Html.fromHtml(name, Html.FROM_HTML_MODE_LEGACY).toString()
+
+                // For URLs we just need &amp; to become &; other entities are uncommon here.
+                val decodedUrl = url.replace("&amp;", "&")
                 
                 presets.add(
                     BluOSPreset(

@@ -9,10 +9,6 @@
     <string name="app_description">Blueshift provides a home screen widget for quick access to your Bluesound players and presets.</string>
     <string name="show_instructions">Show Instructions</string>
     <string name="widget_instructions">To add the widget:\n\n1. Long-press on your home screen\n2. Tap \"Widgets\"\n3. Find \"Blueshift\"\n4. Drag it to your home screen\n5. Configure and enjoy!</string>
-    <string name="station_fip">FIP</string>
-    <string name="station_kexp">KEXP</string>
-    <string name="station_bbc6">BBC 6</string>
-    <string name="station_kcrw">KCRW</string>
     <string name="preset_order_label">Preset order</string>
     <string name="preset_order_default">Default (preset id)</string>
     <string name="preset_order_alphabetical">Alphabetical</string>

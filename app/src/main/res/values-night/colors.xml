@@ -9,4 +9,7 @@
     <color name="widget_icon">#FFFFFF</color>
     <color name="widget_button_background">#2A2A2A</color>
     <color name="widget_item_divider">#333333</color>
+    <!-- Needed for theme references -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 </resources>

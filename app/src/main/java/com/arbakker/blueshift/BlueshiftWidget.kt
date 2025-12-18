@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.text.Html
+import android.util.Log
 import android.widget.RemoteViews
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,19 +22,23 @@ import java.net.URL
 class BlueshiftWidget : AppWidgetProvider() {
     
     companion object {
-        const val ACTION_PLAY_STREAM = "com.arbakker.blueshift.ACTION_PLAY_STREAM"
         const val ACTION_PLAY_PRESET = "com.arbakker.blueshift.ACTION_PLAY_PRESET"
         const val ACTION_PLAYER_SELECTED = "com.arbakker.blueshift.ACTION_PLAYER_SELECTED"
         const val ACTION_SWITCH_PLAYER = "com.arbakker.blueshift.ACTION_SWITCH_PLAYER"
         const val ACTION_PLAY_PAUSE = "com.arbakker.blueshift.ACTION_PLAY_PAUSE"
         const val ACTION_REFRESH = "com.arbakker.blueshift.ACTION_REFRESH"
-        const val EXTRA_STREAM_URL = "stream_url"
-        const val EXTRA_STREAM_NAME = "stream_name"
+        const val ACTION_COPY_NOW_PLAYING = "com.arbakker.blueshift.ACTION_COPY_NOW_PLAYING"
         const val EXTRA_PRESET_ID = "preset_id"
         const val EXTRA_PRESET_NAME = "preset_name"
         const val EXTRA_PLAYER_ID = "player_id"
 
-        fun refreshWidgets(context: Context) {
+    // Holds the most recent artist/track string derived when updating now_playing.
+    // This is what the copy-to-clipboard action will use, so it always matches
+    // what the user actually sees in the widget.
+    @Volatile
+    var lastNowPlayingForClipboard: String? = null
+
+    fun refreshWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(
                 ComponentName(context, BlueshiftWidget::class.java)
@@ -42,7 +48,12 @@ class BlueshiftWidget : AppWidgetProvider() {
                 return
             }
 
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.stations_list)
+            // notifyAppWidgetViewDataChanged is deprecated at API 31+ but still functional.
+            // Modern replacement requires significant refactoring for minimal benefit.
+            @Suppress("DEPRECATION")
+            for (id in appWidgetIds) {
+                appWidgetManager.notifyAppWidgetViewDataChanged(id, R.id.stations_list)
+            }
 
             val updateIntent = Intent(context, BlueshiftWidget::class.java).apply {
                 action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
@@ -65,9 +76,11 @@ class BlueshiftWidget : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        
-        
-        when (intent.action) {
+
+        val action = intent.action
+        Log.d("BlueshiftWidget", "onReceive action=$action")
+
+        when (action) {
             Intent.ACTION_CONFIGURATION_CHANGED -> {
                 refreshWidgets(context)
             }
@@ -75,27 +88,21 @@ class BlueshiftWidget : AppWidgetProvider() {
                 val presetId = intent.getStringExtra(EXTRA_PRESET_ID)
                 val presetName = intent.getStringExtra(EXTRA_PRESET_NAME)
                 
-                
                 if (presetId != null && presetName != null) {
                     playPreset(context, presetId, presetName)
-                } else {
-                }
-            }
-            ACTION_PLAY_STREAM -> {
-                val streamUrl = intent.getStringExtra(EXTRA_STREAM_URL)
-                val streamName = intent.getStringExtra(EXTRA_STREAM_NAME)
-                
-                
-                if (streamUrl != null && streamName != null) {
-                    playStream(context, streamUrl, streamName)
-                } else {
                 }
             }
             ACTION_SWITCH_PLAYER -> {
+                Log.d("BlueshiftWidget", "ACTION_SWITCH_PLAYER received")
                 switchToNextPlayer(context)
             }
             ACTION_PLAY_PAUSE -> {
+                Log.d("BlueshiftWidget", "ACTION_PLAY_PAUSE received")
                 togglePlayPause(context)
+            }
+            ACTION_COPY_NOW_PLAYING -> {
+                Log.d("BlueshiftWidget", "ACTION_COPY_NOW_PLAYING received")
+                copyNowPlayingToClipboard(context)
             }
             ACTION_PLAYER_SELECTED -> {
                 val playerId = intent.getStringExtra(EXTRA_PLAYER_ID)
@@ -105,6 +112,7 @@ class BlueshiftWidget : AppWidgetProvider() {
                 }
             }
             ACTION_REFRESH -> {
+                Log.d("BlueshiftWidget", "ACTION_REFRESH received")
                 refreshWidgets(context)
             }
         }
@@ -124,37 +132,23 @@ class BlueshiftWidget : AppWidgetProvider() {
     override fun onDisabled(context: Context) {
         // Enter relevant functionality for when the last widget is disabled
     }
-    
-    private fun playStream(context: Context, streamUrl: String, streamName: String) {
-        
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val player = ConfigManager.getSelectedPlayer(context)
-                if (player == null) {
-                    // No player selected, can't play
-                    return@launch
-                }
-                
-                
-                // Use BluOS Play?url= endpoint to play stream directly
-                val playUrl = "/Play?url=${java.net.URLEncoder.encode(streamUrl, "UTF-8")}"
-                val fullUrl = player.url + playUrl
-                
-                sendBluesoundCommand(fullUrl)
-                
-            } catch (e: Exception) {
-            }
+
+    private fun copyNowPlayingToClipboard(context: Context) {
+        val text = lastNowPlayingForClipboard
+        if (text.isNullOrBlank()) {
+            return
         }
-        
-        // Update widget info after a delay (in a separate coroutine to not block playback)
-        CoroutineScope(Dispatchers.IO).launch {
-            kotlinx.coroutines.delay(3000) // 3 second delay to allow stream to start
-            refreshWidgets(context)
-        }
+
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Now playing", text)
+        clipboard.setPrimaryClip(clip)
     }
     
     private fun playPreset(context: Context, presetId: String, presetName: String) {
         
+        // Show immediate feedback in the widget while the preset is starting
+        showLoadingNowPlaying(context, presetName)
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val player = ConfigManager.getSelectedPlayer(context)
@@ -183,6 +177,7 @@ class BlueshiftWidget : AppWidgetProvider() {
                 sendBluesoundCommand(fullUrl)
                 
             } catch (e: Exception) {
+                Log.e("BlueshiftWidget", "Error playing preset", e)
             }
         }
         
@@ -190,6 +185,22 @@ class BlueshiftWidget : AppWidgetProvider() {
         CoroutineScope(Dispatchers.IO).launch {
             kotlinx.coroutines.delay(3000) // 3 second delay to allow stream to start
             refreshWidgets(context)
+        }
+    }
+
+    private fun showLoadingNowPlaying(context: Context, presetName: String) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(
+            ComponentName(context, BlueshiftWidget::class.java)
+        )
+
+        if (appWidgetIds.isEmpty()) return
+
+        for (appWidgetId in appWidgetIds) {
+            val views = RemoteViews(context.packageName, R.layout.blueshift_widget)
+            val message = "Loading: $presetName…"
+            views.setTextViewText(R.id.now_playing, message)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
     
@@ -257,6 +268,7 @@ class BlueshiftWidget : AppWidgetProvider() {
                 refreshWidgets(context)
                 
             } catch (e: Exception) {
+                Log.e("BlueshiftWidget", "Error toggling play/pause", e)
             }
         }
     }
@@ -304,6 +316,7 @@ internal fun getPlayerStatus(player: Player): PlayerStatus? {
             connection.disconnect()
         }
     } catch (e: Exception) {
+        Log.e("BlueshiftWidget", "Error sending BluOS command", e)
         null
     }
 }
@@ -320,26 +333,25 @@ internal fun parsePlayerStatus(xml: String): PlayerStatus {
     val albumRegex = """<album>([^<]+)</album>""".toRegex()
     
     val state = stateRegex.find(xml)?.groupValues?.get(1) ?: "stop"
-    val title1 = title1Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlEntities(it) }
-    val title2 = title2Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlEntities(it) }
-    val title3 = title3Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlEntities(it) }
-    val artist = artistRegex.find(xml)?.groupValues?.get(1)?.let { decodeXmlEntities(it) }
-    val album = albumRegex.find(xml)?.groupValues?.get(1)?.let { decodeXmlEntities(it) }
+    val title1 = title1Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlString(it) }
+    val title2 = title2Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlString(it) }
+    val title3 = title3Regex.find(xml)?.groupValues?.get(1)?.let { decodeXmlString(it) }
+    val artist = artistRegex.find(xml)?.groupValues?.get(1)?.let { decodeXmlString(it) }
+    val album = albumRegex.find(xml)?.groupValues?.get(1)?.let { decodeXmlString(it) }
     
     return PlayerStatus(state, title1, title2, title3, artist, album)
 }
 
 /**
- * Decode XML entities like &amp;, &lt;, &gt;, &quot;, &apos;
+ * Decode XML/HTML entities in text coming from the BluOS Status XML.
+ *
+ * We delegate to Android's Html.fromHtml to handle a wide range of entities
+ * instead of maintaining our own replacement table.
  */
-internal fun decodeXmlEntities(text: String): String {
-    return text
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("&#39;", "'")
+internal fun decodeXmlString(text: String): String {
+    @Suppress("DEPRECATION")
+    val spanned = Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
+    return spanned.toString()
 }
 
 /**
@@ -403,6 +415,10 @@ internal fun updateAppWidget(
     
     // If no WiFi network with players, show message
     if (currentNetwork == null || availablePlayers.isEmpty()) {
+        Log.d(
+            "BlueshiftWidget",
+            "Empty state: currentSSID=$currentSSID, currentNetwork=${currentNetwork?.id}, availablePlayers=${availablePlayers.size}"
+        )
         views.setViewVisibility(R.id.stations_list, android.view.View.GONE)
         views.setViewVisibility(R.id.switch_player_button, android.view.View.GONE)
         views.setViewVisibility(R.id.play_pause_button, android.view.View.GONE)
@@ -415,11 +431,12 @@ internal fun updateAppWidget(
         
         views.setTextViewText(R.id.player_indicator, message)
         
-        // Only show "Open settings to add players" when on WiFi but no players
+        // When on WiFi but no players, clearly guide the user.
+        // When not on WiFi, emphasize that tapping will refresh.
         val nowPlayingMessage = if (currentSSID != null) {
-            "Open settings to add players"
+            "No players found. Tap here to refresh."
         } else {
-            "Tap to refresh"
+            "Not connected. Tap here to refresh."
         }
         views.setTextViewText(R.id.now_playing, nowPlayingMessage)
         
@@ -437,8 +454,8 @@ internal fun updateAppWidget(
         views.setOnClickPendingIntent(R.id.player_indicator, refreshPendingIntent)
         views.setOnClickPendingIntent(R.id.now_playing, refreshPendingIntent)
         
-        // Keep settings button visible and functional
-        val settingsIntent = Intent(context, MainActivity::class.java)
+    // Keep settings button visible and functional (open SettingsActivity directly)
+    val settingsIntent = Intent(context, SettingsActivity::class.java)
         val settingsPendingIntent = PendingIntent.getActivity(
             context,
             0,
@@ -457,7 +474,11 @@ internal fun updateAppWidget(
     views.setViewVisibility(R.id.play_pause_button, android.view.View.VISIBLE)
     
     // Set up the ListView with RemoteViewsService
+    // setRemoteAdapter is deprecated at API 31+ but still functional.
+    // Modern replacement (RemoteViews.RemoteCollectionItems) requires API 31+.
     val serviceIntent = Intent(context, StationListRemoteViewsService::class.java)
+    serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+    @Suppress("DEPRECATION")
     views.setRemoteAdapter(R.id.stations_list, serviceIntent)
     
     
@@ -501,6 +522,23 @@ internal fun updateAppWidget(
             try {
                 val status = getPlayerStatus(selectedPlayer)
                 val nowPlayingText = formatNowPlayingText(status)
+
+                // Build artist/track-only text for clipboard, without station name.
+                BlueshiftWidget.lastNowPlayingForClipboard = if (status != null &&
+                    (status.state == "play" || status.state == "stream")
+                ) {
+                    val track = status.title2 ?: status.title1
+                    val artist = status.artist
+
+                    when {
+                        !artist.isNullOrBlank() && !track.isNullOrBlank() -> "${artist} - ${track}"
+                        !track.isNullOrBlank() -> track
+                        !artist.isNullOrBlank() -> artist
+                        else -> null
+                    }
+                } else {
+                    null
+                }
                 val state = status?.state
                 
                 // Update play/pause button icon based on player state
@@ -516,6 +554,7 @@ internal fun updateAppWidget(
                 views.setTextViewText(R.id.now_playing, nowPlayingText)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             } catch (e: Exception) {
+                Log.e("BlueshiftWidget", "Error updating now playing", e)
             }
         }
     } else {
@@ -535,6 +574,19 @@ internal fun updateAppWidget(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
     views.setOnClickPendingIntent(R.id.now_playing, refreshPendingIntent)
+
+    // Set up copy-now-playing button
+    val copyIntent = Intent(context, BlueshiftWidget::class.java).apply {
+        action = BlueshiftWidget.ACTION_COPY_NOW_PLAYING
+        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+    }
+    val copyPendingIntent = PendingIntent.getBroadcast(
+        context,
+        appWidgetId + 4000,
+        copyIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    views.setOnClickPendingIntent(R.id.copy_now_playing_button, copyPendingIntent)
     
     // Set up play/pause button
     val playPauseIntent = Intent(context, BlueshiftWidget::class.java).apply {
@@ -574,5 +626,7 @@ internal fun updateAppWidget(
     
     // Instruct the widget manager to update the widget
     appWidgetManager.updateAppWidget(appWidgetId, views)
+    // notifyAppWidgetViewDataChanged is deprecated at API 31+ but still functional.
+    @Suppress("DEPRECATION")
     appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.stations_list)
 }

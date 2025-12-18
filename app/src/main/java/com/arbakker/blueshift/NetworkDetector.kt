@@ -37,6 +37,9 @@ object NetworkDetector {
             }
             
             // Get SSID
+            // WifiManager.connectionInfo is deprecated but the modern NetworkCallback API
+            // requires API 31+ and is more complex. Since minSdk is 34, this still works fine.
+            @Suppress("DEPRECATION")
             val wifiInfo = wifiManager.connectionInfo
             val ssid = wifiInfo.ssid
             

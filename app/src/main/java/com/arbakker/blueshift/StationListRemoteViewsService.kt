@@ -45,7 +45,13 @@ class StationListRemoteViewsFactory(
             is WidgetItem.PresetItem -> {
                 val preset = item.preset
                 try {
-                    val rv = RemoteViews(context.packageName, R.layout.widget_station_item)
+                    // Use compact layout if enabled
+                    val layoutId = if (ConfigManager.isCompactMode(context)) {
+                        R.layout.widget_station_item_compact
+                    } else {
+                        R.layout.widget_station_item
+                    }
+                    val rv = RemoteViews(context.packageName, layoutId)
                     rv.setTextViewText(R.id.station_name, preset.name)
                     val fillInIntent = Intent().apply {
                         putExtra(BlueshiftWidget.EXTRA_PRESET_ID, preset.id)

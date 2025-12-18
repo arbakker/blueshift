@@ -13,6 +13,7 @@ object ConfigManager {
     private const val KEY_LAST_PRESET_SYNC = "last_preset_sync"
     private const val KEY_PRESET_ORDERING = "preset_ordering"
     private const val KEY_NETWORK_PROFILES = "network_profiles"
+    private const val KEY_COMPACT_MODE = "compact_mode"
     
     private val gson = Gson()
     
@@ -222,6 +223,15 @@ object ConfigManager {
             }
         }
         savePlayers(context, players)
+    }
+
+    // Compact Mode (Dense preset list)
+    fun isCompactMode(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_COMPACT_MODE, false)
+    }
+    
+    fun setCompactMode(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_COMPACT_MODE, enabled).apply()
     }
 
 }

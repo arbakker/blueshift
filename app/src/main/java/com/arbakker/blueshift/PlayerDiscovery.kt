@@ -65,7 +65,11 @@ class PlayerDiscovery {
         private fun getNetworkInfo(context: Context): Pair<String, Int>? {
             try {
                 val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                // WifiInfo.ipAddress is deprecated, but needed for network discovery.
+                // Modern NetworkCallback API doesn't provide subnet/DHCP info needed for scanning.
+                @Suppress("DEPRECATION")
                 val wifiInfo = wifiManager.connectionInfo
+                @Suppress("DEPRECATION")
                 val ipAddress = wifiInfo.ipAddress
                 
                 if (ipAddress == 0) {
@@ -85,6 +89,7 @@ class PlayerDiscovery {
                 
                 
                 // Get DHCP info which includes subnet mask
+                @Suppress("DEPRECATION")
                 val dhcpInfo = wifiManager.dhcpInfo
                 val netmaskInt = dhcpInfo.netmask
                 

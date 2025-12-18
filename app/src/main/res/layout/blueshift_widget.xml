@@ -79,36 +79,55 @@
             android:scaleType="fitCenter" />
     </LinearLayout>
 
-    <!-- Now playing information -->
+    <!-- Now playing information with copy button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="4dp"
+        android:paddingTop="0dp"
         android:paddingBottom="0dp"
         android:background="@color/widget_surface">
-        
-        <TextView
-            android:id="@+id/now_playing"
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="16dp"
-            android:text="-"
-            android:textSize="13sp"
-            android:textColor="@color/widget_text_primary"
-            android:ellipsize="end"
-            android:maxLines="3" />
-        
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/now_playing"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingBottom="4dp"
+                android:text="-"
+                android:textSize="13sp"
+                android:textColor="@color/widget_text_primary"
+                android:ellipsize="end"
+                android:maxLines="3" />
+
+            <ImageButton
+                android:id="@+id/copy_now_playing_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:background="@drawable/button_background"
+                android:src="@drawable/ic_content_copy"
+                android:contentDescription="Copy now playing"
+                android:scaleType="fitCenter" />
+        </LinearLayout>
+
         <!-- Visual separator using gradient to match settings header -->
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="2dp"
             android:layout_marginStart="-16dp"
             android:layout_marginEnd="-16dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/divider_gradient" />
     </LinearLayout>
 

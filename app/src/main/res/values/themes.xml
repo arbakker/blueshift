@@ -1,17 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.BlueshiftWidget" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color - using red from gradient -->
-        <item name="colorPrimary">#FF4444</item>
-        <item name="colorPrimaryVariant">#DD2222</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color - using red tones -->
-        <item name="colorSecondary">#FF6666</item>
-        <item name="colorSecondaryVariant">#FF4444</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+    <!-- Primary brand color - using blue from gradient -->
+    <item name="colorPrimary">#4545ff</item>
+    <item name="colorPrimaryVariant">#2c2cff</item>
+    <item name="colorOnPrimary">@color/white</item>
+    <!-- Secondary brand color - using blue tones -->
+    <item name="colorSecondary">#4545ff</item>
+    <item name="colorSecondaryVariant">#2c2cff</item>
+    <item name="colorOnSecondary">@color/white</item>
+    <!-- Status bar matches app background -->
+    <item name="android:statusBarColor">#4444FF</item>
+        <!-- CustomLize your theme here. -->
     </style>
 
     <style name="Theme.BlueshiftWidget.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
