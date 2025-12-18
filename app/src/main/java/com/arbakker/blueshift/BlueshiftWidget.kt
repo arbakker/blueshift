@@ -420,7 +420,7 @@ internal fun updateAppWidget(
             "Empty state: currentSSID=$currentSSID, currentNetwork=${currentNetwork?.id}, availablePlayers=${availablePlayers.size}"
         )
         views.setViewVisibility(R.id.stations_list, android.view.View.GONE)
-        views.setViewVisibility(R.id.switch_player_button, android.view.View.GONE)
+        views.setViewVisibility(R.id.player_selector_container, android.view.View.GONE)
         views.setViewVisibility(R.id.play_pause_button, android.view.View.GONE)
         
         val message = when {
@@ -470,7 +470,7 @@ internal fun updateAppWidget(
     
     // Normal operation - show widget UI
     views.setViewVisibility(R.id.stations_list, android.view.View.VISIBLE)
-    views.setViewVisibility(R.id.switch_player_button, android.view.View.VISIBLE)
+    views.setViewVisibility(R.id.player_selector_container, android.view.View.VISIBLE)
     views.setViewVisibility(R.id.play_pause_button, android.view.View.VISIBLE)
     
     // Set up the ListView with RemoteViewsService
@@ -601,7 +601,7 @@ internal fun updateAppWidget(
     )
     views.setOnClickPendingIntent(R.id.play_pause_button, playPausePendingIntent)
     
-    // Set up switch player button
+    // Set up switch player button - attach to entire player selector container
     val switchPlayerIntent = Intent(context, BlueshiftWidget::class.java).apply {
         action = BlueshiftWidget.ACTION_SWITCH_PLAYER
         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -612,7 +612,7 @@ internal fun updateAppWidget(
         switchPlayerIntent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
-    views.setOnClickPendingIntent(R.id.switch_player_button, switchPlayerPendingIntent)
+    views.setOnClickPendingIntent(R.id.player_selector_container, switchPlayerPendingIntent)
     
     // Set up settings button click to open SettingsActivity
     val settingsIntent = Intent(context, SettingsActivity::class.java)

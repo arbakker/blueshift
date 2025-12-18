@@ -32,6 +32,7 @@
         
         <!-- Player selector group -->
         <LinearLayout
+            android:id="@+id/player_selector_container"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:minHeight="40dp"
@@ -53,7 +54,9 @@
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_audio_video_receiver"
                 android:contentDescription="Switch player"
-                android:scaleType="fitCenter" />
+                android:scaleType="fitCenter"
+                android:clickable="false"
+                android:focusable="false" />
             
             <TextView
                 android:id="@+id/player_indicator"

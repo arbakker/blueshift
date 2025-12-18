@@ -9,8 +9,8 @@
     <item name="colorSecondary">#7878ff</item>
     <item name="colorSecondaryVariant">#4545ff</item>
     <item name="colorOnSecondary">@color/white</item>
-    <!-- Status bar matches app background -->
-    <item name="android:statusBarColor">#222244</item>
+    <!-- Status bar matches Material dark theme background -->
+    <item name="android:statusBarColor">?android:attr/colorBackground</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>
