@@ -494,7 +494,7 @@ class SettingsActivity : AppCompatActivity() {
                         setupPlayers()
                         BlueshiftWidget.refreshWidgets(this)
                     }
-                    2 -> exportPresetsToM3U()
+                    2 -> exportPresetsToM3U(player)
                 }
             }
             .show()
@@ -650,11 +650,11 @@ class SettingsActivity : AppCompatActivity() {
      * INCOMPLETE, NON-FUNCTIONAL: This feature is not fully implemented or tested.
      * Requires ENABLE_PRESET_EXPORT feature flag to be enabled.
      */
-    private fun exportPresetsToM3U() {
-        val presets = ConfigManager.getPresets(this)
+    private fun exportPresetsToM3U(player: Player) {
+        val presets = ConfigManager.getPresetsForPlayer(this, player.id)
         
         if (presets.isEmpty()) {
-            Toast.makeText(this, "No presets to export. Sync presets first.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No presets to export for ${player.label}. Sync presets first.", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -666,23 +666,23 @@ class SettingsActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("TuneIn Presets Detected")
                 .setMessage(
-                    "Found ${tuneInPresets.size} TuneIn preset(s).\n\n" +
+                    "Found ${tuneInPresets.size} TuneIn preset(s) for ${player.label}.\n\n" +
                     "The app will attempt to resolve these to actual stream URLs using your BluOS player.\n\n" +
                     "Note: This feature is for personal backup/archival purposes only."
                 )
                 .setPositiveButton("Continue") { _, _ ->
-                    performExport(presets)
+                    performExport(presets, player)
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
         } else {
-            performExport(presets)
+            performExport(presets, player)
         }
     }
     
-    private fun performExport(presets: List<BluOSPreset>) {
+    private fun performExport(presets: List<BluOSPreset>, player: Player) {
         val progressDialog = AlertDialog.Builder(this)
-            .setMessage("Exporting presets...")
+            .setMessage("Exporting presets for ${player.label}...")
             .setCancelable(false)
             .create()
         progressDialog.show()
@@ -721,6 +721,7 @@ class SettingsActivity : AppCompatActivity() {
                 val m3uContent = buildString {
                     appendLine("#EXTM3U")
                     appendLine("# Exported from Blueshift Widget")
+                    appendLine("# Player: ${player.label}")
                     if (skippedCount > 0) {
                         appendLine("# Note: $skippedCount TuneIn preset(s) could not be resolved")
                     }
@@ -748,9 +749,10 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
                 
-                // Save to file in cache directory
+                // Save to file in cache directory with player name
                 val cacheDir = cacheDir
-                val m3uFile = File(cacheDir, "blueshift_presets.m3u")
+                val sanitizedPlayerName = player.label.replace(Regex("[^a-zA-Z0-9-]"), "_")
+                val m3uFile = File(cacheDir, "blueshift_${sanitizedPlayerName}_presets.m3u")
                 m3uFile.writeText(m3uContent)
                 
                 // Share the file using FileProvider
@@ -902,16 +904,10 @@ class SettingsActivity : AppCompatActivity() {
                 bitrateRegex.find(url)?.groupValues?.get(1)?.toIntOrNull() ?: 0
             } ?: streamUrls.first()
             
-            // Resolve PLS/M3U files to actual stream URLs
-            val finalUrl = if (bestUrl.endsWith(".pls", ignoreCase = true) || 
-                              bestUrl.endsWith(".m3u", ignoreCase = true)) {
-                resolvePlaylistUrl(bestUrl)
-            } else {
-                bestUrl
-            }
-            
-            return if (finalUrl != null && finalUrl.startsWith("http", ignoreCase = true)) {
-                preset.copy(url = finalUrl)
+            // Use the playlist URL directly without resolving it
+            // Most media players can handle .pls and .m3u URLs directly
+            return if (bestUrl.startsWith("http", ignoreCase = true)) {
+                preset.copy(url = bestUrl)
             } else {
                 preset // Keep original if resolution failed
             }
@@ -919,38 +915,6 @@ class SettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             // Return original preset if resolution fails
             return preset
-        }
-    }
-    
-    private suspend fun resolvePlaylistUrl(playlistUrl: String): String? {
-        return try {
-            withContext(Dispatchers.IO) {           
-                val url = URL(playlistUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.connectTimeout = 5000
-                connection.readTimeout = 5000
-                
-                try {
-                    val content = connection.inputStream.bufferedReader().use { it.readText() }
-                    
-                    // Parse PLS format: File1=http://...
-                    if (playlistUrl.endsWith(".pls", ignoreCase = true)) {
-                        val fileRegex = """File\d+=(.+)""".toRegex()
-                        fileRegex.find(content)?.groupValues?.get(1)?.trim()
-                    } 
-                    // Parse M3U format: lines starting with http
-                    else {
-                        content.lines()
-                            .firstOrNull { it.trim().startsWith("http", ignoreCase = true) }
-                            ?.trim()
-                    }
-                } finally {
-                    connection.disconnect()
-                }
-            }
-        } catch (e: Exception) {
-            null
         }
     }
     
